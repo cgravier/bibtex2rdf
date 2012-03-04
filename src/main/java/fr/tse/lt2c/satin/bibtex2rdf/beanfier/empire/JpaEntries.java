@@ -14,6 +14,8 @@ import fr.tse.lt2c.satin.gomasio.utils.Gomasio;
 import javax.persistence.EntityManager;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.clarkparsia.empire.SupportsRdfId.RdfKey;
 import com.clarkparsia.empire.SupportsRdfId.URIKey;
@@ -21,28 +23,32 @@ import com.clarkparsia.empire.SupportsRdfId.URIKey;
 /**
  * Test it :
  * 
- * 1) PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> PREFIX
- * owl:<http://www.w3.org/2002/07/owl#> PREFIX
- * xsd:<http://www.w3.org/2001/XMLSchema#> PREFIX
- * rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX dc:
- * <http://purl.org/dc/elements/1.1/> PREFIX foaf: <http://xmlns.com/foaf/0.1/>
- * 
- * 
- * SELECT DISTINCT ?property ?hasValue ?isValueOf WHERE { { ?made ?property
- * ?hasValue } UNION { ?isValueOf ?property ?made } } ORDER BY
- * (!BOUND(?hasValue)) ?property ?hasValue ?isValueOf
- * 
- * 2) PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> PREFIX
- * owl:<http://www.w3.org/2002/07/owl#> PREFIX
- * xsd:<http://www.w3.org/2001/XMLSchema#> PREFIX
- * rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX dc:
- * <http://purl.org/dc/elements/1.1/> PREFIX foaf: <http://xmlns.com/foaf/0.1/>
- * 
- * SELECT DISTINCT ?maker ?made WHERE { ?made foaf:maker ?maker } ORDER BY
- * ?maker
+ * 1)
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:<http://www.w3.org/2002/07/owl#>
+PREFIX xsd:<http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc:<http://purl.org/dc/elements/1.1/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT DISTINCT ?property ?hasValue ?isValueOf WHERE { { ?made ?property
+?hasValue } UNION { ?isValueOf ?property ?made } } ORDER BY
+(!BOUND(?hasValue)) ?property ?hasValue ?isValueOf
+ 
+ * 2)
+ PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+ PREFIX owl:<http://www.w3.org/2002/07/owl#>
+ PREFIX xsd:<http://www.w3.org/2001/XMLSchema#>
+ PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+ PREFIX dc:<http://purl.org/dc/elements/1.1/>
+ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  
+ SELECT DISTINCT ?maker ?made WHERE { ?made foaf:maker ?maker } ORDER BY ?maker
  */
 
 public class JpaEntries {
+
+	private Log log = LogFactory.getLog(getClass());
 
 	public JpaEntries(BibtexFile bibtexFile) {
 
@@ -78,12 +84,16 @@ public class JpaEntries {
 
 			if (anEntry.getFieldValue("author") != null) {
 				String authors = anEntry.getFieldValue("author").toString();
-				String str[] = authors.split("and");
+				String str[] = authors.split(" and ");
 
 				for (int i = 0; i < str.length; i++) {
 
 					// create a new author and persist it.
-					Author a = getAuthor((new Gomasio()).removeUnexpectedChars(str[i]), aManager);
+					String _buff = str[i];
+					_buff = _buff.replaceAll(",", "@@@");
+					_buff = (new Gomasio()).removeUnexpectedChars(_buff);
+					_buff = _buff.replaceAll("@@@", ",");
+					Author a = getAuthor(_buff, aManager);
 
 					// Linking author to the paper.
 					try {
@@ -92,8 +102,29 @@ public class JpaEntries {
 
 						// Linking paper to the author.
 						// Linking paper to the author.
-						if (a.getmPapers() == null) {a.setmPapers(new ArrayList<URI>());}
-						a.getmPapers().add(new URI(paper.getRdfId().toString()));
+						if (a.getmPapers() == null) {
+							a.setmPaper(new ArrayList<URI>());
+						}
+
+						if (paper.getRdfId() == null) {
+							URIKey cle;
+							try {
+								int hash = paper.getmTitle().hashCode();
+								if (hash < 0)
+									hash = -1 * hash;
+
+								cle = new URIKey(new URI(
+										"http://data-satin.telecom-st-etienne.fr/paper/"
+												+ hash));
+								paper.setRdfId(cle);
+							} catch (URISyntaxException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+						}
+
+						a.getmPapers()
+								.add(new URI(paper.getRdfId().toString()));
 					} catch (URISyntaxException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -138,6 +169,7 @@ public class JpaEntries {
 		String event_uri = "http://data-satin.telecom-st-etienne.fr/"
 				+ eventType + "/" + event;
 		event_uri = (new Gomasio()).removeUnexpectedChars(event_uri);
+		event_uri = event_uri.replaceAll(" ", "");
 		ConferenceEvent e = aManager.find(ConferenceEvent.class, event_uri);
 		if (e == null) {
 			// author does not exist, create it and persist it
@@ -160,7 +192,7 @@ public class JpaEntries {
 	private Author getAuthor(String string, EntityManager aManager) {
 		// possibilities : "First von Last" "von Last, First"
 		// "von Last, Jr, First"
-
+		string = string.trim();
 		String familyName = "";
 		String surName = "";
 		if (!string.contains(",")) {
@@ -176,16 +208,15 @@ public class JpaEntries {
 				String str[] = string.split(" ");
 				String startLast = "";
 				for (int i = 0; i < str.length; i++) {
-					if (Character.isLowerCase(str[i].charAt(0))) {
+					if (str[i].length() > 0
+							&& Character.isLowerCase(str[i].charAt(0))) {
 						startLast = str[i] + " ";
 					}
 				}
-				
-				surName = string
-						.substring(
-								0,
-								string.indexOf(startLast));
-				familyName = string.substring(string.indexOf(startLast),string.length());
+
+				surName = string.substring(0, string.indexOf(startLast));
+				familyName = string.substring(string.indexOf(startLast),
+						string.length());
 			}
 		} else if (StringUtils.countMatches(string, ",") == 1) {
 			// "von Last, First"
@@ -199,10 +230,13 @@ public class JpaEntries {
 			surName = str[str.length - 1];
 		}
 
+		String _pn = surName.replaceAll(" ", "");
+		String _n = familyName.replaceAll(" ", "");
+
 		String aut_uri = "http://data-satin.telecom-st-etienne.fr/person/"
-				+ (new Gomasio()).removeUnexpectedChars(familyName).trim() + "-" + (new Gomasio()).removeUnexpectedChars(surName).trim();
-		
-		System.out.println("key : "+aut_uri);
+				+ (new Gomasio()).removeUnexpectedChars(_n).trim() + "-"
+				+ (new Gomasio()).removeUnexpectedChars(_pn).trim();
+
 		Author a = aManager.find(Author.class, aut_uri);
 		if (a == null) {
 			// author does not exist, create it and persist it
@@ -225,17 +259,15 @@ public class JpaEntries {
 
 	private void persistPaper(Paper paper, EntityManager aManager) {
 
-		System.out.println("Persisting paper ");
-		System.out.println("title : " + paper.getmTitle());
-		System.out.println("year : " + paper.getmPublishYear());
+		log.info("Persisting paper \"" + paper.getmTitle() + "\" ("
+				+ paper.getmPublishYear() + ")");
 
+		if (aManager.contains(paper)) {
+			log.info("Paper exists. Update it (update = remove/insert in the semantic web ...)");
+			aManager.remove(paper);
+			log.info("Remove Done.");
+		}
 		aManager.persist(paper);
+		log.info("(re)Insertion Done.");
 	}
-
-	/*
-	 * private String removeUnexpectedChars(String s) { s = s.replaceAll(",",
-	 * ""); s = s.replaceAll("\\{", ""); s = s.replaceAll("\\}", ""); s =
-	 * s.replaceAll("\\\\", ""); s = s.replaceAll("\\.",""); s =
-	 * s.replaceAll("ldots", ""); return s.toLowerCase(); }
-	 */
 }
