@@ -20,30 +20,30 @@ import org.apache.commons.logging.LogFactory;
 import com.clarkparsia.empire.SupportsRdfId.RdfKey;
 import com.clarkparsia.empire.SupportsRdfId.URIKey;
 
-/**
+/*
  * Test it :
  * 
  * 1)
-PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+ * PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl:<http://www.w3.org/2002/07/owl#>
 PREFIX xsd:<http://www.w3.org/2001/XMLSchema#>
 PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX dc:<http://purl.org/dc/elements/1.1/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-
-SELECT DISTINCT ?property ?hasValue ?isValueOf WHERE { { ?made ?property
-?hasValue } UNION { ?isValueOf ?property ?made } } ORDER BY
-(!BOUND(?hasValue)) ?property ?hasValue ?isValueOf
  
- * 2)
- PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
- PREFIX owl:<http://www.w3.org/2002/07/owl#>
- PREFIX xsd:<http://www.w3.org/2001/XMLSchema#>
- PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
- PREFIX dc:<http://purl.org/dc/elements/1.1/>
- PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-  
- SELECT DISTINCT ?maker ?made WHERE { ?made foaf:maker ?maker } ORDER BY ?maker
+SELECT DISTINCT ?property ?hasValue ?isValueOf WHERE { { ?made ?property
+ ?hasValue } UNION { ?isValueOf ?property ?made } } ORDER BY
+ (!BOUND(?hasValue)) ?property ?hasValue ?isValueOf
+ * 
+ * 2) PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> PREFIX
+ * owl:<http://www.w3.org/2002/07/owl#> PREFIX
+ * xsd:<http://www.w3.org/2001/XMLSchema#> PREFIX
+ * rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX
+ * dc:<http://purl.org/dc/elements/1.1/> PREFIX foaf:
+ * <http://xmlns.com/foaf/0.1/>
+ * 
+ * SELECT DISTINCT ?maker ?made WHERE { ?made foaf:maker ?maker } ORDER BY
+ * ?maker
  */
 
 public class JpaEntries {
@@ -67,6 +67,9 @@ public class JpaEntries {
 			if (anEntry.getFieldValue("title") != null) {
 				titre = (new Gomasio()).removeUnexpectedChars(anEntry
 						.getFieldValue("title").toString());
+				titre = titre.replaceAll("\\r", "");
+				titre = titre.replaceAll("\\n", "");
+				titre = titre.replaceAll("\\t", " ");
 			}
 			if (anEntry.getFieldValue("pages") != null)
 				pages = (new Gomasio()).removeUnexpectedChars(anEntry
@@ -95,39 +98,42 @@ public class JpaEntries {
 					_buff = _buff.replaceAll("@@@", ",");
 					Author a = getAuthor(_buff, aManager);
 
-					// Linking author to the paper.
-					try {
-						paper.getmAuthors().add(
-								new URI(a.getRdfId().toString()));
-
-						// Linking paper to the author.
-						// Linking paper to the author.
-						if (a.getmPapers() == null) {
-							a.setmPaper(new ArrayList<URI>());
-						}
-
-						if (paper.getRdfId() == null) {
-							URIKey cle;
-							try {
-								int hash = paper.getmTitle().hashCode();
-								if (hash < 0)
-									hash = -1 * hash;
-
-								cle = new URIKey(new URI(
-										"http://data-satin.telecom-st-etienne.fr/paper/"
-												+ hash));
-								paper.setRdfId(cle);
-							} catch (URISyntaxException e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
+					if (a != null) {
+						// Linking author to the paper.
+						try {
+							if (a.getRdfId() != null) {
+								paper.getmAuthors().add(
+										new URI(a.getRdfId().toString()));
 							}
-						}
+							// Linking paper to the author.
+							// Linking paper to the author.
+							if (a.getmPapers() == null) {
+								a.setmPaper(new ArrayList<URI>());
+							}
 
-						a.getmPapers()
-								.add(new URI(paper.getRdfId().toString()));
-					} catch (URISyntaxException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+							if (paper.getRdfId() == null) {
+								URIKey cle;
+								try {
+									int hash = paper.getmTitle().hashCode();
+									if (hash < 0)
+										hash = -1 * hash;
+
+									cle = new URIKey(new URI(
+											"http://data-satin.telecom-st-etienne.fr/paper/"
+													+ hash));
+									paper.setRdfId(cle);
+								} catch (URISyntaxException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							}
+
+							a.getmPapers().add(
+									new URI(paper.getRdfId().toString()));
+						} catch (URISyntaxException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -170,6 +176,13 @@ public class JpaEntries {
 				+ eventType + "/" + event;
 		event_uri = (new Gomasio()).removeUnexpectedChars(event_uri);
 		event_uri = event_uri.replaceAll(" ", "");
+		event_uri = event_uri.replaceAll("\\r", "");
+		event_uri = event_uri.replaceAll("\\n", "");
+		event_uri = event_uri.replaceAll("\\t", "");
+		event_uri = event_uri.replaceAll("`", "");
+		event_uri = event_uri.replaceAll("\"", "");
+		log.info("looking up event : " + event_uri);
+
 		ConferenceEvent e = aManager.find(ConferenceEvent.class, event_uri);
 		if (e == null) {
 			// author does not exist, create it and persist it
@@ -193,6 +206,9 @@ public class JpaEntries {
 		// possibilities : "First von Last" "von Last, First"
 		// "von Last, Jr, First"
 		string = string.trim();
+		string = string.replaceAll("\\r", "");
+		string = string.replaceAll("\\n", "");
+		string = string.replaceAll("\\t", " ");
 		String familyName = "";
 		String surName = "";
 		if (!string.contains(",")) {
@@ -208,15 +224,24 @@ public class JpaEntries {
 				String str[] = string.split(" ");
 				String startLast = "";
 				for (int i = 0; i < str.length; i++) {
-					if (str[i].length() > 0
+					log.info("examinating " + str[i]);
+					if (str[i].length() > 0 && i > 0
 							&& Character.isLowerCase(str[i].charAt(0))) {
-						startLast = str[i] + " ";
+						startLast = str[i];
 					}
 				}
-
+				log.info("looking surname *" + string
+						+ "* and with startLast *" + startLast + "*");
 				surName = string.substring(0, string.indexOf(startLast));
+				surName = surName.replaceAll(" ", "");
+				log.info("found surname *" + surName + "*");
+
+				log.info("looking familyame *" + string
+						+ "* and with startLast *" + startLast + "*");
 				familyName = string.substring(string.indexOf(startLast),
 						string.length());
+				familyName = familyName.replaceAll(" ", "");
+				log.info("found familyname *" + familyName + "*");
 			}
 		} else if (StringUtils.countMatches(string, ",") == 1) {
 			// "von Last, First"
@@ -231,30 +256,53 @@ public class JpaEntries {
 		}
 
 		String _pn = surName.replaceAll(" ", "");
+		_pn = surName.replaceAll("\"", "");
+		_pn = surName.replaceAll("\'", "");
+		surName.replaceAll(" ", "");
+
 		String _n = familyName.replaceAll(" ", "");
+		_n = familyName.replaceAll("\"", "");
+		_n = familyName.replaceAll("\'", "");
+		_n = familyName.replaceAll(" ", "");
 
 		String aut_uri = "http://data-satin.telecom-st-etienne.fr/person/"
 				+ (new Gomasio()).removeUnexpectedChars(_n).trim() + "-"
 				+ (new Gomasio()).removeUnexpectedChars(_pn).trim();
 
-		Author a = aManager.find(Author.class, aut_uri);
-		if (a == null) {
-			// author does not exist, create it and persist it
-			a = new Author(surName, familyName);
+		aut_uri = aut_uri.replaceAll("\"", "");
+		aut_uri = aut_uri.replaceAll(" ", "");
+		aut_uri = aut_uri.replaceAll("\\`", "");
+		aut_uri = aut_uri.replaceAll("\\\\`", "");
+		aut_uri = aut_uri.replaceAll("\\\\\\`", "");
+		aut_uri = aut_uri.replaceAll("`", "");
 
-			// satin-compliant URI generation for authors
-			URIKey cle;
-			try {
-				cle = new URIKey(new URI(aut_uri));
+		try {
+			Author a = aManager.find(Author.class, aut_uri);
 
-				a.setRdfId(cle);
-				aManager.persist(a);
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if (a == null) {
+				// author does not exist, create it and persist it
+				a = new Author(surName, familyName);
+
+				// satin-compliant URI generation for authors
+				URIKey cle;
+				try {
+					cle = new URIKey(new URI(aut_uri));
+
+					a.setRdfId(cle);
+					aManager.persist(a);
+				} catch (URISyntaxException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			return a;
+		} catch (Exception e) {
+			for (char c : aut_uri.toCharArray()) {
+				log.info("caractere qui pete les burnes : *" + c + "*");
+				return null;
 			}
 		}
-		return a;
+		return null;
 	}
 
 	private void persistPaper(Paper paper, EntityManager aManager) {
@@ -263,11 +311,23 @@ public class JpaEntries {
 				+ paper.getmPublishYear() + ")");
 
 		if (aManager.contains(paper)) {
-			log.info("Paper exists. Update it (update = remove/insert in the semantic web ...)");
+			log.info("Paper exists. Update Uri *" + paper.getRdfId()
+					+ "* (update = remove/insert in the semantic web ...)");
 			aManager.remove(paper);
-			log.info("Remove Done.");
+			aManager.flush();
+			log.info("Remove Done.\nReinserting ...");
+
+			if (aManager.contains(paper)) {
+				log.error("Remove for preparing update for paper "
+						+ paper.getRdfId() + " failed ! (title = *"
+						+ paper.getmTitle() + "*)");
+			} else {
+				aManager.persist(paper);
+				log.info("(re)Insertion Done.");
+			}
+		} else {
+			aManager.persist(paper);
+			log.info("Insertion Done.");
 		}
-		aManager.persist(paper);
-		log.info("(re)Insertion Done.");
 	}
 }
