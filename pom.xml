@@ -1,0 +1,25 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>fr.tse.lt2c.satin</groupId>
+  <artifactId>bibtex2rdf</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>bibtex2rdf</name>
+  
+          <repositories>
+				 <repository>
+                        <id>satin-releases</id>
+                        <name>Satin Releases</name>
+                        <url>http://192.168.8.135:8081/artifactory/satin-release/</url>
+                </repository>
+
+        </repositories>
+  
+  <dependencies>
+ 		<dependency>
+                        <groupId>fr.tse.lt2c.satin.gomasio</groupId>
+                        <artifactId>Gomasio</artifactId>
+                        <version>0.1.7-SNAPSHOT</version>
+         </dependency>
+
+  </dependencies>
+</project>
