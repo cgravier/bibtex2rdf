@@ -115,7 +115,6 @@ public final class Main {
 	}
 
 	 
-	
 	private static void printNonFatalExceptions(Exception[] exceptions) {
 		if (exceptions.length > 0) {
 			System.err.println("Non-fatal exceptions: ");

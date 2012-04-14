@@ -13,11 +13,10 @@ import bibtex.dom.BibtexFile;
 import fr.tse.lt2c.satin.gomasio.utils.Gomasio;
 import javax.persistence.EntityManager;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.clarkparsia.empire.SupportsRdfId.RdfKey;
 import com.clarkparsia.empire.SupportsRdfId.URIKey;
 
 /*
@@ -282,6 +281,7 @@ public class JpaEntries {
 			if (a == null) {
 				// author does not exist, create it and persist it
 				a = new Author(surName, familyName);
+				
 
 				// satin-compliant URI generation for authors
 				URIKey cle;
