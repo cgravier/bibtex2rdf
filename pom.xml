@@ -7,14 +7,22 @@
 	<name>bibtex2rdf</name>
 
 	<repositories>
+	<!--		
+		Our private release server. You should build your own maven dependency of Croquette from https://github.com/cgravier/Croquette
+		Since Croquette is using Empire, we will wait a forthcoming publishing of Empire as a maven central artifact (planned by Empire's author)
+		After that Croquette won't need a repository entry in its pom.xml any more, and therefore will be qualified itself to be published as a maven artifact on maven central.
+		Until that, follow Croquette README instruction to build your own Croquette dependency locally.
+
 		<repository>
-			<id>satin-releases</id>
-			<name>Satin Releases</name>
-			<url>http://192.168.8.135:8081/artifactory/satin-release/</url>
+		<id>satin-releases</id>
+		<name>Satin Releases</name>
+		<url>http://192.168.8.135:8081/artifactory/satin-release/</url>
+	-->
 		</repository>
 	</repositories>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>fr.tse.lt2c.satin</groupId>
 			<artifactId>Croquette</artifactId>
