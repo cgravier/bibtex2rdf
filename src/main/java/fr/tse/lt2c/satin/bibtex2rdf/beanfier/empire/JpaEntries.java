@@ -298,7 +298,6 @@ public class JpaEntries {
 			return a;
 		} catch (Exception e) {
 			for (char c : aut_uri.toCharArray()) {
-				log.info("caractere qui pete les burnes : *" + c + "*");
 				return null;
 			}
 		}

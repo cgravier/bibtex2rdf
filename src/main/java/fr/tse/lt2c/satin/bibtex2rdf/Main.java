@@ -106,7 +106,7 @@ public final class Main {
 			return;
 		}
 		if(noOutput) return;
-		System.err.println("\n\nGenerating output ...");
+		System.out.println("\n\nGenerating output for the bibtex file ...");
 		//PrintWriter out = new PrintWriter(System.out);
 		//bibtexFile.printBibtex(out);
 		//out.flush();
