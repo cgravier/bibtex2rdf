@@ -48,8 +48,11 @@ SELECT DISTINCT ?property ?hasValue ?isValueOf WHERE { { ?made ?property
 public class JpaEntries {
 
 	private Log log = LogFactory.getLog(getClass());
+	private String publisherURI;
 
-	public JpaEntries(BibtexFile bibtexFile) {
+	public JpaEntries(BibtexFile bibtexFile, String p) {
+
+		this.publisherURI=p;
 
 		EntityManager aManager = Gomasio
 				.getSesameEntityManager("satin.properties");
@@ -117,9 +120,7 @@ public class JpaEntries {
 									if (hash < 0)
 										hash = -1 * hash;
 
-									cle = new URIKey(new URI(
-											"http://data-satin.telecom-st-etienne.fr/paper/"
-													+ hash));
+									cle = new URIKey(new URI(publisherURI + hash));
 									paper.setRdfId(cle);
 								} catch (URISyntaxException e1) {
 									// TODO Auto-generated catch block
@@ -171,8 +172,7 @@ public class JpaEntries {
 
 	private ConferenceEvent getEvent(String event, String eventType,
 			EntityManager aManager) {
-		String event_uri = "http://data-satin.telecom-st-etienne.fr/"
-				+ eventType + "/" + event;
+		String event_uri = eventType + "/" + event;
 		event_uri = (new Gomasio()).removeUnexpectedChars(event_uri);
 		event_uri = event_uri.replaceAll(" ", "");
 		event_uri = event_uri.replaceAll("\\r", "");
@@ -180,6 +180,7 @@ public class JpaEntries {
 		event_uri = event_uri.replaceAll("\\t", "");
 		event_uri = event_uri.replaceAll("`", "");
 		event_uri = event_uri.replaceAll("\"", "");
+		event_uri=publisherURI+event_uri;
 		log.info("looking up event : " + event_uri);
 
 		ConferenceEvent e = aManager.find(ConferenceEvent.class, event_uri);
@@ -264,16 +265,15 @@ public class JpaEntries {
 		_n = familyName.replaceAll("\'", "");
 		_n = familyName.replaceAll(" ", "");
 
-		String aut_uri = "http://data-satin.telecom-st-etienne.fr/person/"
-				+ (new Gomasio()).removeUnexpectedChars(_n).trim() + "-"
+		String aut_uri = (new Gomasio()).removeUnexpectedChars(_n).trim() + "-"
 				+ (new Gomasio()).removeUnexpectedChars(_pn).trim();
-
 		aut_uri = aut_uri.replaceAll("\"", "");
 		aut_uri = aut_uri.replaceAll(" ", "");
 		aut_uri = aut_uri.replaceAll("\\`", "");
 		aut_uri = aut_uri.replaceAll("\\\\`", "");
 		aut_uri = aut_uri.replaceAll("\\\\\\`", "");
 		aut_uri = aut_uri.replaceAll("`", "");
+		aut_uri = publisherURI+aut_uri;
 
 		try {
 			Author a = aManager.find(Author.class, aut_uri);

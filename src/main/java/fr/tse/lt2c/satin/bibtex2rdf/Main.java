@@ -38,7 +38,7 @@ public final class Main {
 
 	public static void main(String[] args) {
 		//long startTime = System.currentTimeMillis();
-		if (args.length < 1) {
+		if (args.length < 2) {
 			usage();
 			return;
 		}
@@ -51,7 +51,7 @@ public final class Main {
 		boolean expandCrossrefs = false;
 		boolean expandPersonLists = false;
 		boolean noOutput = false;
-		for (int argsIndex = 0; argsIndex < args.length - 1; argsIndex++) {
+		for (int argsIndex = 0; argsIndex < args.length - 2; argsIndex++) {
 			String argument = args[argsIndex];
 			if (argument.equals("-expandStringDefinitions")) {
 				expandMacros = true;
@@ -69,10 +69,12 @@ public final class Main {
 			}
 		}
 
+		String publisherURI = args[args.length-1];
+
 		try {
-			String filename = args[args.length - 1];
+			String filename = args[args.length-2];
 			System.err.println("Parsing \"" + filename + "\" ... ");
-			parser.parse(bibtexFile, new FileReader(new File(args[args.length - 1])));
+			parser.parse(bibtexFile, new FileReader(new File(filename)));
 		} catch (Exception e) {
 			System.err.println("Fatal exception: ");
 			e.printStackTrace();
@@ -106,12 +108,12 @@ public final class Main {
 			return;
 		}
 		if(noOutput) return;
-		System.out.println("\n\nGenerating output for the bibtex file ...");
+		System.out.println("\n\nUpdating the triplestore for publisher " + publisherURI);
 		//PrintWriter out = new PrintWriter(System.out);
 		//bibtexFile.printBibtex(out);
 		//out.flush();
 
-		JpaEntries jEntries = new JpaEntries(bibtexFile);
+		JpaEntries jEntries = new JpaEntries(bibtexFile,publisherURI);
 	}
 
 	 
